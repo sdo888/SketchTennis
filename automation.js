@@ -1,5 +1,5 @@
 // sdo888/sketchtennis/SketchTennis-b3708640fbba7f2b5de345be44e07fbe40c4abaf/automation.js
-import { URLS, SELECTORS, VALUES, WAIT_TIMES, TIME_SELECTOR_MAP } from './constants.js';
+import { URLS, SELECTORS, VALUES, WAIT_TIMES, TIME_SELECTOR_MAP, DEBUG_MODE } from './constants.js'; // DEBUG_MODEをインポート
 import { parseAccountCsv } from './utils.js';
 import { executeScript, wait, pollPage } from './automation-helpers.js';
 import { loginAndNavigateToLotteryPage, navigateToCalendarView, findCorrectWeek } from './automation-navigation.js';
@@ -12,7 +12,7 @@ import { performLotteryApplication } from './automation-actions.js';
  * @param {function} sendResponse - 最終的なレスポンスを返すためのコールバック関数。
  * @param {function} logger - リアルタイムログ出力用の関数。
  */
-export async function executeConfirmLottery(selections, sendResponse, logger) { // loggerを追加
+export async function executeConfirmLottery(selections, sendResponse, logger) {
   try {
     logger('抽選申込処理を開始します。');
     logger('UIから受け取った申込情報:');
@@ -58,6 +58,9 @@ export async function executeConfirmLottery(selections, sendResponse, logger) { 
 
     let successfulApplications = 0;
 
+    // 開いているタブを追跡するためのマップ (エラー発生時のクリーンアップ用)
+    const openTabs = new Map(); // Map<accountIndex, tabObject>
+
     const applicationsByAccount = new Map();
     for (const app of individualApplications) {
       if (!applicationsByAccount.has(app.assignedAccountIndex)) {
@@ -73,11 +76,10 @@ export async function executeConfirmLottery(selections, sendResponse, logger) { 
       try {
         logger(`--- アカウント: ${account.id} での申込み処理を開始 ---`);
 
-        // ロガーを渡す
         const { tab } = await loginAndNavigateToLotteryPage(logger, account);
         currentTab = tab;
+        openTabs.set(accountIndex, currentTab); // タブをマップに追加
 
-        // ロガーを渡す
         await navigateToCalendarView(currentTab, appsForThisAccount[0].parkId, logger);
 
         for (let i = 0; i < appsForThisAccount.length; i++) {
@@ -87,11 +89,9 @@ export async function executeConfirmLottery(selections, sendResponse, logger) { 
           logger(`--- (${i + 1}/${appsForThisAccount.length}) ${account.id} での個別申込処理を開始 (内部申込番号: ${application.applicationNumberInSlot}) ---`);
           logger(`申込内容: ${application.date} ${application.parkName} ${application.timeSlot}`);
 
-          // ロガーを渡す
           await findCorrectWeek(currentTab.id, application.date, logger);
           const dateForCellClick = application.date.substring(5).replace('-', '');
 
-          // ロガーを渡す
           await performLotteryApplication(currentTab, {
             date: dateForCellClick,
             timeSelector: TIME_SELECTOR_MAP[application.timeSlot],
@@ -104,20 +104,40 @@ export async function executeConfirmLottery(selections, sendResponse, logger) { 
         }
       } catch (error) {
         logger(`--- アカウント: ${account.id} での処理中にエラーが発生しました: ${error.message} ---`);
+        // ここでのエラー発生時も、finallyブロックでタブのクローズはDEBUG_MODEに従う
       } finally {
         if (currentTab) {
-          logger(`--- アカウント: ${account.id} のタブを閉じます。---`);
-          await chrome.tabs.remove(currentTab.id);
+          if (!DEBUG_MODE) { // DEBUG_MODEがfalseの場合のみタブを閉じる
+            logger(`--- アカウント: ${account.id} のタブを閉じます。---`);
+            await chrome.tabs.remove(currentTab.id);
+          } else {
+            logger(`--- デバッグモードのため、アカウント: ${account.id} のタブは閉じません。---`);
+          }
+          openTabs.delete(accountIndex); // マップから削除
         }
       }
     }
 
     logger(`全 ${individualApplications.length} 件中、${successfulApplications} 件の申込が完了しました。`);
-    // ログ配列はリアルタイムで送信されるため、ここでは含めない
     sendResponse({ success: true, message: `抽選申込処理が完了しました。 (${successfulApplications}/${individualApplications.length}件成功)` });
   } catch (error) {
     logger(`エラーが発生しました: ${error.message}`);
-    // ログ配列はリアルタイムで送信されるため、ここでは含めない
+    // 全体エラー発生時、開いているタブが残っていれば閉じる (DEBUG_MODEでない場合)
+    if (!DEBUG_MODE) {
+      logger('--- エラー発生時のタブクリーンアップを開始します。 ---');
+      for (const [accountIndex, tabObject] of openTabs.entries()) {
+        try {
+          logger(`タブ ${tabObject.id} を閉じます (アカウント: ${allAccounts[accountIndex].id})。`);
+          await chrome.tabs.remove(tabObject.id);
+        } catch (closeError) {
+          console.error(`タブ ${tabObject.id} のクローズに失敗しました:`, closeError);
+          logger(`タブ ${tabObject.id} のクローズに失敗しました: ${closeError.message}`);
+        }
+      }
+      logger('--- タブクリーンアップ完了。 ---');
+    } else {
+      logger('--- デバッグモードのため、エラー発生時も開いているタブは閉じません。 ---');
+    }
     sendResponse({ success: false, message: error.message });
   }
 }

@@ -1,7 +1,8 @@
 // sdo888/sketchtennis/SketchTennis-b3708640fbba7f2b5de345be44e07fbe40c4abaf/automation-actions.js
 import { executeScript, wait } from './automation-helpers.js';
-import { clickCalendarCell, navigateToCalendarView } from './automation-navigation.js'; // Note: navigateToCalendarView is not used in this file
-import { WAIT_TIMES } from './constants.js';
+import { clickCalendarCell, navigateToCalendarView } from './automation-navigation.js';
+import { WAIT_TIMES, SELECTORS } from './constants.js'; // SELECTORSをインポート
+import { pollPage } from './automation-helpers.js'; // pollPageをインポート
 
 /**
  * Performs a single complete lottery application flow from the calendar view.
@@ -85,11 +86,14 @@ export async function performLotteryApplication(tab, applicationDetails, logger)
 
   // 5. 完了ページへの遷移を待ち、必要に応じて「続けて申込み」ボタンをクリック
   logger('「抽選申込完了」ページへの遷移を待ちます。');
-  await wait(WAIT_TIMES.PAGE_LOAD);
+  await wait(WAIT_TIMES.PAGE_LOAD); // 完了ページへの遷移を待つ
 
   if (shouldClickContinueButton) {
     logger('「続けて申込み」ボタンをクリックします。');
     const continueApplyButtonSelector = '#btn-light[onclick*="gWOpeTransLotInstSrchVacantAction"]';
+
+    // ボタンが完全にアクティブになるまで少し待つ
+    await wait(WAIT_TIMES.AJAX_UPDATE / 2);
 
     await executeScript(tab.id, (selector) => {
       const continueButton = document.querySelector(selector);
@@ -97,16 +101,26 @@ export async function performLotteryApplication(tab, applicationDetails, logger)
         const onclickAttr = continueButton.getAttribute('onclick');
         if (onclickAttr) {
           const scriptCode = onclickAttr.replace(/^javascript:/, '');
-          new Function(scriptCode)();
+          new Function(scriptCode)(); // スクリプトを実行
         } else {
-          throw new Error('「続けて申込み」ボタンのonclick属性が見つかりませんでした。');
+          continueButton.click(); // フォールバックとしてネイティブクリックを試す
         }
       } else {
         throw new Error('「続けて申込み」ボタンが見つかりませんでした。');
       }
     }, [continueApplyButtonSelector]);
-    logger('「続けて申込み」ボタンをクリックしました。');
-    await wait(WAIT_TIMES.PAGE_LOAD);
+
+    // カレンダー画面への遷移をポーリングで確認
+    logger('カレンダー画面への遷移を確認中...');
+    try {
+        // SELECTORS.LOTTERY_TABLE が表示されるまで待機
+        await pollPage(tab.id, (selector) => !!document.querySelector(selector), [SELECTORS.LOTTERY_TABLE], WAIT_TIMES.PAGE_LOAD * 3, WAIT_TIMES.AJAX_UPDATE / 2);
+        logger('「続けて申込み」ボタンをクリックしました。カレンダー画面が表示されたことを確認しました。');
+    } catch (e) {
+        // タイムアウトした場合のエラー
+        throw new Error(`「続けて申込み」ボタンクリック後、カレンダー画面への遷移を確認できませんでした: ${e.message}`);
+    }
+
   } else {
     logger('「続けて申込み」ボタンはクリックしません。（このアカウントでの最後の申込みのため）');
   }

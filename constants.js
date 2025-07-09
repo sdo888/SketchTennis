@@ -1,3 +1,4 @@
+// sdo888/sketchtennis/SketchTennis-b3708640fbba7f2b5de345be44e07fbe40c4abaf/constants.js
 export const URLS = {
   TOP_PAGE: 'https://kouen.sports.metro.tokyo.lg.jp/web/index.jsp',
   LOGIN_PAGE_PART: '/web/rsvWTransUserLoginAction.do',
@@ -79,3 +80,5 @@ export const PARK_LIST = [
   { value: "1301315", name: "大井ふ頭中央海浜公園Ｂ" },
   { value: "1301360", name: "有明テニスＣ人工芝コート" },
 ];
+
+export const DEBUG_MODE = true; // 開発時にタブを閉じないようにする (リリース時は false に設定)
