@@ -1,4 +1,4 @@
-import { PARK_LIST, PARK_LIST_HARD_COURT } from './constants.js'; // PARK_LIST_HARD_COURTをインポート
+import { PARK_LIST, PARK_LIST_HARD_COURT } from './constants.js';
 import { ui } from './ui.js';
 
 const FORBIDDEN_PARK_ID = "1301110"; // 城北中央公園
@@ -30,9 +30,16 @@ function createParkSelector(state, ui, selectedCourtType) {
     parksToDisplay = PARK_LIST;
   }
 
+  // 現在編集中の日付に公園が既に選択されているかを確認し、なければ「選択してください」を初期値とする
+  const previouslySelectedParkId = state.selectedSlots.get(state.currentEditingDate)?.parkId;
+  const initialSelectedParkValue = previouslySelectedParkId || "0";
+
   parksToDisplay.forEach(park => {
     const option = new Option(park.name, park.value);
-    // デフォルト選択のロジックは必要に応じてここに追加
+    // 初期選択の公園値と一致する場合にselectedを設定
+    if (park.value === initialSelectedParkValue) {
+      option.selected = true;
+    }
     select.appendChild(option);
   });
 
@@ -40,7 +47,6 @@ function createParkSelector(state, ui, selectedCourtType) {
   ui.modalParkSelectorContainer.appendChild(select);
 
   // --- Add event listener to prevent selection of a specific park ---
-  // (FORBIDDEN_PARK_ID が現在のリストに含まれるかどうかに依存)
   let previousValidParkId = select.value;
 
   select.addEventListener('focus', () => {
@@ -164,10 +170,15 @@ function confirmTimeSelection(state, ui, renderCalendar, updateAccountSummary) {
   const parkId = parkSelect.value;
   const parkName = parkSelect.options[parkSelect.selectedIndex].text;
 
+  // Get the selected court type
+  const courtTypeSelect = document.getElementById('court-type-select'); // 追加
+  const selectedCourtType = courtTypeSelect ? courtTypeSelect.value : ''; // 追加
+
   if (selectedTimesAndAccounts.size > 0) {
     state.selectedSlots.set(state.currentEditingDate, {
       parkId: parkId,
       parkName: parkName,
+      courtType: selectedCourtType, // 追加
       timeSlots: selectedTimesAndAccounts,
     });
   } else {
@@ -181,7 +192,7 @@ function confirmTimeSelection(state, ui, renderCalendar, updateAccountSummary) {
 /**
  * Initializes the event listeners for the modal buttons.
  * @param {object} state - The application state object.
- * @param {object} ui - The UI elements object.
+  * @param {object} ui - The UI elements object.
  * @param {function} renderCalendar - The function to re-render the calendar.
  */
 export function initializeModal(state, ui, renderCalendar, updateAccountSummary) {

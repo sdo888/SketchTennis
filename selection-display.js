@@ -22,9 +22,20 @@ export function renderSelectionDetails(state, ui) {
       const dateObj = new Date(date.replace(/-/g, '/'));
       const dayOfWeek = dayOfWeekNames[dateObj.getDay()];
 
+      const parkName = dailySelection.parkName;
+      const courtType = dailySelection.courtType; // コート種類を取得
+
+      let courtTypeDisplayName = ''; // 表示用のコート種類名
+      if (courtType === 'artificial') { //
+        courtTypeDisplayName = '人工芝'; //
+      } else if (courtType === 'hard') { //
+        courtTypeDisplayName = 'ハード'; //
+      }
+
       const dateHeader = document.createElement('div');
       dateHeader.className = 'selection-date-header';
-      dateHeader.textContent = `【${date} (${dayOfWeek}) - ${dailySelection.parkName}】`;
+      // コート種類を表示に追加
+      dateHeader.textContent = `【${date} (${dayOfWeek}) - ${courtTypeDisplayName} - ${parkName}】`; // 修正
       list.appendChild(dateHeader);
 
       const sortedTimes = Array.from(dailySelection.timeSlots.keys()).sort();
