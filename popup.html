@@ -7,7 +7,6 @@
   </head>
   <body>
     <div class="container">
-      <!-- メイン画面 -->
       <div id="main-view">
         <img src="images/icon48.png" alt="アイコン" class="logo">
         <h1>Sketchテニス予約</h1>
@@ -46,7 +45,6 @@
         </div>
       </div>
 
-      <!-- カレンダー画面 (最初は非表示) -->
       <div id="calendar-view" class="hidden">
         <div class="calendar-header">
           <button id="prev-month-btn" class="btn-nav">&lt;</button>
@@ -86,11 +84,20 @@
         </div>
       </div>
 
-      <!-- 時間帯選択モーダル (最初は非表示) -->
       <div id="time-slot-modal" class="modal-overlay hidden">
         <div class="modal-content">
           <h3 id="modal-date-header"></h3>
+          
+          <div class="modal-form-group">
+            <label for="court-type-select">コート種類:</label>
+            <select id="court-type-select" class="custom-select">
+              <option value="artificial" selected>人工芝</option>
+              <option value="hard">ハード</option>
+            </select>
+          </div>
+
           <div id="modal-park-selector-container" class="modal-form-group"></div>
+          
           <p>希望の時間帯を選択してください (複数選択可)。</p>
           <div id="time-slot-list"></div>
           <div class="modal-actions">
