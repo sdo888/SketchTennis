@@ -66,15 +66,28 @@ export async function loginAndNavigateToLotteryPage(logger, account) {
  * From the main lottery page, navigates to the calendar view for a specific facility.
  * @param {object} tab - The tab object.
  * @param {string} parkId - The ID of the park to select.
+ * @param {string} courtType - The type of court ('artificial' or 'hard'). // ★変更: courtType引数を追加
  * @param {function} logger - The logger function to push messages to.
  */
-export async function navigateToCalendarView(tab, parkId, logger) {
+export async function navigateToCalendarView(tab, parkId, courtType, logger) { // ★変更: courtType引数を追加
+  let applyButtonSelector;
+  let logMessage;
+
+  if (courtType === 'hard') {
+    applyButtonSelector = SELECTORS.TENNIS_HARD_APPLY_BUTTON;
+    logMessage = '「テニス(ハード)」の申込みボタンをクリックしました。';
+  } else {
+    // デフォルトは人工芝、または 'artificial' の場合
+    applyButtonSelector = SELECTORS.TENNIS_ARTIFICIAL_APPLY_BUTTON; // ★変更: セレクター名を修正
+    logMessage = '「テニス(人工芝)」の申込みボタンをクリックしました。';
+  }
+
   await executeScript(tab.id, (selector) => {
     const button = document.querySelector(selector);
     const script = button.getAttribute('onclick').replace(/^javascript:/, '');
     new Function(script)();
-  }, [SELECTORS.TENNIS_APPLY_BUTTON]);
-  logger('「テニス(人工芝)」の申込みボタンをクリックしました。');
+  }, [applyButtonSelector]); // ★変更: 動的に選択されたセレクターを使用
+  logger(logMessage); // ★変更: 動的に選択されたログメッセージを使用
 
   await wait(WAIT_TIMES.PAGE_LOAD);
   logger('公園と施設を選択します...');

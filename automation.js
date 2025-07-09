@@ -33,6 +33,7 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
               date: dailySelection.date,
               parkId: dailySelection.parkId,
               parkName: dailySelection.parkName,
+              courtType: dailySelection.courtType, // ★追加: courtTypeをindividualApplicationsに含める
               timeSlot: timeSlot,
               assignedAccountIndex: assignedAccountIndex,
               applicationNumberInSlot: applicationNumber,
@@ -80,14 +81,14 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
         currentTab = tab;
         openTabs.set(accountIndex, currentTab); // タブをマップに追加
 
-        await navigateToCalendarView(currentTab, appsForThisAccount[0].parkId, logger);
+        await navigateToCalendarView(currentTab, appsForThisAccount[0].parkId, appsForThisAccount[0].courtType, logger); // ★変更: courtTypeを渡す
 
         for (let i = 0; i < appsForThisAccount.length; i++) {
           const application = appsForThisAccount[i];
           const isLastApplicationForThisAccount = (i === appsForThisAccount.length - 1);
 
           logger(`--- (${i + 1}/${appsForThisAccount.length}) ${account.id} での個別申込処理を開始 (内部申込番号: ${application.applicationNumberInSlot}) ---`);
-          logger(`申込内容: ${application.date} ${application.parkName} ${application.timeSlot}`);
+          logger(`申込内容: ${application.date} ${application.parkName} ${application.timeSlot} (コート種類: ${application.courtType})`); // ★ログ出力も変更
 
           await findCorrectWeek(currentTab.id, application.date, logger);
           const dateForCellClick = application.date.substring(5).replace('-', '');

@@ -136,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         date,
         parkId: details.parkId,
         parkName: details.parkName,
+        courtType: details.courtType, // ★この行を追加しました
         timeSlots: Object.fromEntries(details.timeSlots)
       };
     });

@@ -18,7 +18,8 @@ export const SELECTORS = {
   PAGE_TITLE_H2: 'h2.session-title',
 
   // Lottery Application Page
-  TENNIS_APPLY_BUTTON: '#lottery-info-list-area > table > tbody > tr:nth-child(4) > td.request > button',
+  TENNIS_ARTIFICIAL_APPLY_BUTTON: '#lottery-info-list-area > table > tbody > tr:nth-child(4) > td.request > button', // 人工芝用ボタンのセレクター
+  TENNIS_HARD_APPLY_BUTTON: '#lottery-info-list-area > table > tbody > tr:nth-child(3) > td.request > button', // ハードコート用ボタンのセレクター
   PARK_SELECT: '#bname',
   FACILITY_SELECT: '#iname',
   NEXT_WEEK_BUTTON: '#next-week',
@@ -83,10 +84,10 @@ export const PARK_LIST = [
 
 export const PARK_LIST_HARD_COURT = [
   { value: "0", name: "選択してください。" },
-  { value: "1310", name: "大井ふ頭海浜公園Ａ" },
-  { value: "1315", name: "大井ふ頭海浜公園Ｂ" },
-  { value: "1350", name: "有明テニスＡ屋外ハードコート" },
-  { value: "1370", name: "有明テニスＢインドアコート" },
+  { value: "1201310", name: "大井ふ頭中央海浜公園Ａ" }, // ★修正: valueを"1201310"に変更
+  { value: "1201315", name: "大井ふ頭中央海浜公園Ｂ" }, // ★修正: valueを"1201315"に変更
+  { value: "1201350", name: "有明テニスＡ屋外ハードコート" }, // ★修正: valueを"1201350"に変更
+  { value: "1201370", name: "有明テニスＢインドアコート" }, // ★修正: valueを"1201370"に変更
 ];
 
 export const DEBUG_MODE = true; // 開発時にタブを閉じないようにする (リリース時は false に設定)
