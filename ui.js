@@ -21,9 +21,11 @@ export const ui = {
   calendarView: document.getElementById('calendar-view'),
   calendarMonthYear: document.getElementById('calendar-month-year'),
   calendarGrid: document.getElementById('calendar-grid'),
-  selectionSummary: document.getElementById('selection-summary'),
-  usedAccountsCount: document.getElementById('used-accounts-count'),
-  remainingAccountsCount: document.getElementById('remaining-accounts-count'),
+  selectionSummary: document.getElementById('selection-summary'), // この参照自体は残します
+  usedAccountsArtificial: document.getElementById('used-accounts-artificial'),
+  remainingAccountsArtificial: document.getElementById('remaining-accounts-artificial'),
+  usedAccountsHard: document.getElementById('used-accounts-hard'),
+  remainingAccountsHard: document.getElementById('remaining-accounts-hard'),
   selectionDetailsView: document.getElementById('selection-details-view'),
   selectionDetailsList: document.getElementById('selection-details-list'),
   prevMonthBtn: document.getElementById('prev-month-btn'),
@@ -44,7 +46,7 @@ export const ui = {
   timeSlotList: document.getElementById('time-slot-list'),
   confirmTimeBtn: document.getElementById('confirm-time-btn'),
   cancelTimeBtn: document.getElementById('cancel-time-btn'),
-  courtTypeSelect: document.getElementById('court-type-select'), // 追加
+  courtTypeSelect: document.getElementById('court-type-select'),
 };
 
 export function showView(viewName) {

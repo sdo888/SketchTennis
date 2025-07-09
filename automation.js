@@ -1,5 +1,5 @@
 // sdo888/sketchtennis/SketchTennis-b3708640fbba7f2b5de345be44e07fbe40c4abaf/automation.js
-import { URLS, SELECTORS, VALUES, WAIT_TIMES, TIME_SELECTOR_MAP, DEBUG_MODE } from './constants.js'; // DEBUG_MODEをインポート
+import { URLS, SELECTORS, VALUES, WAIT_TIMES, TIME_SELECTOR_MAP, DEBUG_MODE } from './constants.js';
 import { parseAccountCsv } from './utils.js';
 import { executeScript, wait, pollPage } from './automation-helpers.js';
 import { loginAndNavigateToLotteryPage, navigateToCalendarView, findCorrectWeek } from './automation-navigation.js';
@@ -33,7 +33,7 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
               date: dailySelection.date,
               parkId: dailySelection.parkId,
               parkName: dailySelection.parkName,
-              courtType: dailySelection.courtType, // ★追加: courtTypeをindividualApplicationsに含める
+              courtType: dailySelection.courtType,
               timeSlot: timeSlot,
               assignedAccountIndex: assignedAccountIndex,
               applicationNumberInSlot: applicationNumber,
@@ -60,7 +60,7 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
     let successfulApplications = 0;
 
     // 開いているタブを追跡するためのマップ (エラー発生時のクリーンアップ用)
-    const openTabs = new Map(); // Map<accountIndex, tabObject>
+    const openTabs = new Map();
 
     const applicationsByAccount = new Map();
     for (const app of individualApplications) {
@@ -79,16 +79,16 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
 
         const { tab } = await loginAndNavigateToLotteryPage(logger, account);
         currentTab = tab;
-        openTabs.set(accountIndex, currentTab); // タブをマップに追加
+        openTabs.set(accountIndex, currentTab);
 
-        await navigateToCalendarView(currentTab, appsForThisAccount[0].parkId, appsForThisAccount[0].courtType, logger); // ★変更: courtTypeを渡す
+        await navigateToCalendarView(currentTab, appsForThisAccount[0].parkId, appsForThisAccount[0].courtType, logger);
 
         for (let i = 0; i < appsForThisAccount.length; i++) {
           const application = appsForThisAccount[i];
           const isLastApplicationForThisAccount = (i === appsForThisAccount.length - 1);
 
           logger(`--- (${i + 1}/${appsForThisAccount.length}) ${account.id} での個別申込処理を開始 (内部申込番号: ${application.applicationNumberInSlot}) ---`);
-          logger(`申込内容: ${application.date} ${application.parkName} ${application.timeSlot} (コート種類: ${application.courtType})`); // ★ログ出力も変更
+          logger(`申込内容: ${application.date} ${application.parkName} ${application.timeSlot} (コート種類: ${application.courtType})`);
 
           await findCorrectWeek(currentTab.id, application.date, logger);
           const dateForCellClick = application.date.substring(5).replace('-', '');
@@ -105,16 +105,15 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
         }
       } catch (error) {
         logger(`--- アカウント: ${account.id} での処理中にエラーが発生しました: ${error.message} ---`);
-        // ここでのエラー発生時も、finallyブロックでタブのクローズはDEBUG_MODEに従う
       } finally {
         if (currentTab) {
-          if (!DEBUG_MODE) { // DEBUG_MODEがfalseの場合のみタブを閉じる
+          if (!DEBUG_MODE) {
             logger(`--- アカウント: ${account.id} のタブを閉じます。---`);
             await chrome.tabs.remove(currentTab.id);
           } else {
             logger(`--- デバッグモードのため、アカウント: ${account.id} のタブは閉じません。---`);
           }
-          openTabs.delete(accountIndex); // マップから削除
+          openTabs.delete(accountIndex);
         }
       }
     }
@@ -123,7 +122,6 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
     sendResponse({ success: true, message: `抽選申込処理が完了しました。 (${successfulApplications}/${individualApplications.length}件成功)` });
   } catch (error) {
     logger(`エラーが発生しました: ${error.message}`);
-    // 全体エラー発生時、開いているタブが残っていれば閉じる (DEBUG_MODEでない場合)
     if (!DEBUG_MODE) {
       logger('--- エラー発生時のタブクリーンアップを開始します。 ---');
       for (const [accountIndex, tabObject] of openTabs.entries()) {

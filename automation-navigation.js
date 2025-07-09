@@ -1,6 +1,6 @@
 // sdo888/sketchtennis/SketchTennis-f49469c17466247324ca2a270d69c6c405e56fb8/automation-navigation.js
 import { URLS, SELECTORS, VALUES, WAIT_TIMES, TIME_SELECTOR_MAP } from './constants.js';
-import { parseAccountCsv } from './utils.js'; // Note: parseAccountCsv is not used in this file
+import { parseAccountCsv } from './utils.js';
 import { executeScript, wait, pollPage } from './automation-helpers.js';
 
 /**
@@ -66,10 +66,10 @@ export async function loginAndNavigateToLotteryPage(logger, account) {
  * From the main lottery page, navigates to the calendar view for a specific facility.
  * @param {object} tab - The tab object.
  * @param {string} parkId - The ID of the park to select.
- * @param {string} courtType - The type of court ('artificial' or 'hard'). // ★変更: courtType引数を追加
+ * @param {string} courtType - The type of court ('artificial' or 'hard').
  * @param {function} logger - The logger function to push messages to.
  */
-export async function navigateToCalendarView(tab, parkId, courtType, logger) { // ★変更: courtType引数を追加
+export async function navigateToCalendarView(tab, parkId, courtType, logger) {
   let applyButtonSelector;
   let logMessage;
 
@@ -77,8 +77,7 @@ export async function navigateToCalendarView(tab, parkId, courtType, logger) { /
     applyButtonSelector = SELECTORS.TENNIS_HARD_APPLY_BUTTON;
     logMessage = '「テニス(ハード)」の申込みボタンをクリックしました。';
   } else {
-    // デフォルトは人工芝、または 'artificial' の場合
-    applyButtonSelector = SELECTORS.TENNIS_ARTIFICIAL_APPLY_BUTTON; // ★変更: セレクター名を修正
+    applyButtonSelector = SELECTORS.TENNIS_ARTIFICIAL_APPLY_BUTTON;
     logMessage = '「テニス(人工芝)」の申込みボタンをクリックしました。';
   }
 
@@ -86,8 +85,8 @@ export async function navigateToCalendarView(tab, parkId, courtType, logger) { /
     const button = document.querySelector(selector);
     const script = button.getAttribute('onclick').replace(/^javascript:/, '');
     new Function(script)();
-  }, [applyButtonSelector]); // ★変更: 動的に選択されたセレクターを使用
-  logger(logMessage); // ★変更: 動的に選択されたログメッセージを使用
+  }, [applyButtonSelector]);
+  logger(logMessage);
 
   await wait(WAIT_TIMES.PAGE_LOAD);
   logger('公園と施設を選択します...');
@@ -120,13 +119,12 @@ export async function navigateToCalendarView(tab, parkId, courtType, logger) { /
   }, [SELECTORS]);
   logger('公園と施設の選択が完了しました。');
 
-  // 公園と施設の選択が完了した後、カレンダーテーブルの表示を確認する前に1秒待つ
-  await wait(1000); // 1秒待機
+  await wait(1000);
 
-  await wait(WAIT_TIMES.AJAX_UPDATE); // 既存の待機処理
-  const calendarVisible = await executeScript(tab.id, (selector) => !!document.querySelector(selector), [SELECTORS.LOTTERY_TABLE]); // 既存のカレンダーテーブル表示確認
-  if (!calendarVisible) throw new Error('カレンダーテーブルの表示に失敗しました。'); // 既存のエラーハンドリング
-  logger('カレンダーが表示されました。'); // 既存のログ出力
+  await wait(WAIT_TIMES.AJAX_UPDATE);
+  const calendarVisible = await executeScript(tab.id, (selector) => !!document.querySelector(selector), [SELECTORS.LOTTERY_TABLE]);
+  if (!calendarVisible) throw new Error('カレンダーテーブルの表示に失敗しました。');
+  logger('カレンダーが表示されました。');
 }
 
 /**

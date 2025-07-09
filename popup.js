@@ -20,16 +20,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const rerenderCalendar = () => renderCalendar(state, ui, handleDateClick);
 
   const updateAccountSummary = () => {
-    let usedAccounts = 0;
+    let usedAccountsArtificial = 0;
+    let usedAccountsHard = 0;
+
     for (const dailySelection of state.selectedSlots.values()) {
+      const courtType = dailySelection.courtType;
       for (const accounts of dailySelection.timeSlots.values()) {
-        usedAccounts += accounts;
+        if (courtType === 'artificial') {
+          usedAccountsArtificial += accounts;
+        } else if (courtType === 'hard') {
+          usedAccountsHard += accounts;
+        }
       }
     }
-    const remainingAccounts = state.totalAccounts - usedAccounts;
 
-    ui.usedAccountsCount.textContent = usedAccounts;
-    ui.remainingAccountsCount.textContent = remainingAccounts;
+    const remainingAccountsArtificial = state.totalAccounts - usedAccountsArtificial;
+    const remainingAccountsHard = state.totalAccounts - usedAccountsHard;
+
+    ui.usedAccountsArtificial.textContent = usedAccountsArtificial;
+    ui.remainingAccountsArtificial.textContent = remainingAccountsArtificial;
+    ui.usedAccountsHard.textContent = usedAccountsHard;
+    ui.remainingAccountsHard.textContent = remainingAccountsHard;
 
     renderSelectionDetails(state, ui);
   };
@@ -136,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         date,
         parkId: details.parkId,
         parkName: details.parkName,
-        courtType: details.courtType, // ★この行を追加しました
+        courtType: details.courtType,
         timeSlots: Object.fromEntries(details.timeSlots)
       };
     });

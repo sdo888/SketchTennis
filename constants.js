@@ -18,8 +18,8 @@ export const SELECTORS = {
   PAGE_TITLE_H2: 'h2.session-title',
 
   // Lottery Application Page
-  TENNIS_ARTIFICIAL_APPLY_BUTTON: '#lottery-info-list-area > table > tbody > tr:nth-child(4) > td.request > button', // 人工芝用ボタンのセレクター
-  TENNIS_HARD_APPLY_BUTTON: '#lottery-info-list-area > table > tbody > tr:nth-child(3) > td.request > button', // ハードコート用ボタンのセレクター
+  TENNIS_ARTIFICIAL_APPLY_BUTTON: '#lottery-info-list-area > table > tbody > tr:nth-child(4) > td.request > button',
+  TENNIS_HARD_APPLY_BUTTON: '#lottery-info-list-area > table > tbody > tr:nth-child(3) > td.request > button',
   PARK_SELECT: '#bname',
   FACILITY_SELECT: '#iname',
   NEXT_WEEK_BUTTON: '#next-week',
@@ -52,7 +52,7 @@ export const TIME_SELECTOR_MAP = {
 };
 
 export const PARK_LIST = [
-  { value: "0", name: "選択してください。" }, // 追加
+  { value: "0", name: "選択してください。" },
   { value: "1301000", name: "日比谷公園" },
   { value: "1301010", name: "芝公園" },
   { value: "1301040", name: "猿江恩賜公園" },
@@ -84,10 +84,10 @@ export const PARK_LIST = [
 
 export const PARK_LIST_HARD_COURT = [
   { value: "0", name: "選択してください。" },
-  { value: "1201310", name: "大井ふ頭中央海浜公園Ａ" }, // ★修正: valueを"1201310"に変更
-  { value: "1201315", name: "大井ふ頭中央海浜公園Ｂ" }, // ★修正: valueを"1201315"に変更
-  { value: "1201350", name: "有明テニスＡ屋外ハードコート" }, // ★修正: valueを"1201350"に変更
-  { value: "1201370", name: "有明テニスＢインドアコート" }, // ★修正: valueを"1201370"に変更
+  { value: "1201310", name: "大井ふ頭中央海浜公園Ａ" },
+  { value: "1201315", name: "大井ふ頭中央海浜公園Ｂ" },
+  { value: "1201350", name: "有明テニスＡ屋外ハードコート" },
+  { value: "1201370", name: "有明テニスＢインドアコート" },
 ];
 
-export const DEBUG_MODE = true; // 開発時にタブを閉じないようにする (リリース時は false に設定)
+export const DEBUG_MODE = true;
