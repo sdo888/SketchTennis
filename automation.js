@@ -1,3 +1,4 @@
+// sdo888/sketchtennis/SketchTennis-b3708640fbba7f2b5de345be44e07fbe40c4abaf/automation.js
 import { URLS, SELECTORS, VALUES, WAIT_TIMES, TIME_SELECTOR_MAP } from './constants.js';
 import { parseAccountCsv } from './utils.js';
 import { executeScript, wait, pollPage } from './automation-helpers.js';
@@ -20,15 +21,28 @@ export async function executeConfirmLottery(selections, sendResponse) {
 
     // 1. UIからの選択情報を、個別の申込リストに変換する
     const individualApplications = [];
+    const REPEAT_COUNT_PER_SLOT = 2; // 各UI選択スロットにつき2回申込みを行う
+
+    let overallAccountCounter = 0; // 使用するユニークなアカウント数を追跡
+
     for (const dailySelection of selections) {
       for (const [timeSlot, count] of Object.entries(dailySelection.timeSlots)) {
-        for (let i = 0; i < count; i++) {
-          individualApplications.push({
-            date: dailySelection.date,
-            parkId: dailySelection.parkId,
-            parkName: dailySelection.parkName,
-            timeSlot: timeSlot,
-          });
+        // 'count'はUIで指定された、この時間帯に使用するアカウント数
+        // 各UIスロット（アカウント）に対して、指定された回数申込みを繰り返す
+        for (let uiSlotIdx = 0; uiSlotIdx < count; uiSlotIdx++) {
+          const assignedAccountIndex = overallAccountCounter; // このUIスロットに割り当てるアカウントのインデックスを決定
+
+          for (let applicationNumber = 1; applicationNumber <= REPEAT_COUNT_PER_SLOT; applicationNumber++) {
+            individualApplications.push({
+              date: dailySelection.date,
+              parkId: dailySelection.parkId,
+              parkName: dailySelection.parkName,
+              timeSlot: timeSlot,
+              assignedAccountIndex: assignedAccountIndex, // allAccounts配列のどのインデックスのアカウントを使うか
+              applicationNumberInSlot: applicationNumber, // このアカウントで何件目の申込みか (1件目, 2件目)
+            });
+          }
+          overallAccountCounter++; // 次のUIスロットには別のアカウントを割り当てるためカウンターをインクリメント
         }
       }
     }
@@ -36,25 +50,27 @@ export async function executeConfirmLottery(selections, sendResponse) {
     if (individualApplications.length === 0) {
       throw new Error('申込可能な時間帯が選択されていません。');
     }
-    log.push(`合計 ${individualApplications.length} 件の申込を作成します。`);
+    log.push(`合計 ${individualApplications.length} 件の申込を作成します。（各UI選択スロットにつき ${REPEAT_COUNT_PER_SLOT} 回申込み）`);
 
     // 2. 全てのアカウント情報を取得する
     const { accountCsvContent } = await chrome.storage.local.get('accountCsvContent');
     if (!accountCsvContent) throw new Error('アカウントCSVがアップロードされていません。');
     const allAccounts = parseAccountCsv(accountCsvContent);
-    if (allAccounts.length < individualApplications.length) {
-      throw new Error(`アカウント数が不足しています。必要: ${individualApplications.length}, 登録済: ${allAccounts.length}`);
+
+    // 必要なユニークなアカウント数を確認
+    if (allAccounts.length < overallAccountCounter) {
+      throw new Error(`アカウント数が不足しています。必要: ${overallAccountCounter}, 登録済: ${allAccounts.length}`);
     }
 
-    // 3. 各申込を、それぞれ別のアカウントで実行する
+    // 3. 各申込を、それぞれ別のアカウントとセッションで実行する
     let successfulApplications = 0;
     for (let i = 0; i < individualApplications.length; i++) {
       const application = individualApplications[i];
-      const account = allAccounts[i];
+      const account = allAccounts[application.assignedAccountIndex]; // 割り当てられたアカウントを使用
       let tab; // このループ専用のタブ
 
       try {
-        log.push(`--- ${i + 1}/${individualApplications.length}件目の申込処理を開始 (アカウント: ${account.id}) ---`);
+        log.push(`--- ${i + 1}/${individualApplications.length}件目の申込処理を開始 (アカウント: ${account.id}, 内部申込番号: ${application.applicationNumberInSlot}) ---`);
         log.push(`申込内容: ${application.date} ${application.parkName} ${application.timeSlot}`);
 
         ({ tab } = await loginAndNavigateToLotteryPage(log, account));
@@ -62,7 +78,11 @@ export async function executeConfirmLottery(selections, sendResponse) {
         await navigateToCalendarView(tab, application.parkId, log);
         await findCorrectWeek(tab.id, application.date, log);
         const dateForCellClick = application.date.substring(5).replace('-', '');
-        await performLotteryApplication(tab, { date: dateForCellClick, timeSelector: TIME_SELECTOR_MAP[application.timeSlot], applicationNumber: 1 }, log);
+        await performLotteryApplication(tab, {
+          date: dateForCellClick,
+          timeSelector: TIME_SELECTOR_MAP[application.timeSlot],
+          applicationNumber: application.applicationNumberInSlot // 新しいプロパティを使用
+        }, log);
 
         log.push(`--- ${i + 1}件目の申込処理が正常に完了しました ---`);
         successfulApplications++;
