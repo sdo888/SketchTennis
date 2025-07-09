@@ -83,10 +83,32 @@ export async function navigateToCalendarView(tab, parkId, logger) {
     changeBname(document.form1);
   }, [parkId, SELECTORS]);
   await wait(WAIT_TIMES.AJAX_UPDATE);
-  await executeScript(tab.id, (selectors, values) => {
-    document.querySelector(selectors.FACILITY_SELECT).value = values.FACILITY_ID_TENNIS;
-    changeIname(document.form1, gLotWTransLotInstSrchVacantAjaxAction);
-  }, [SELECTORS, VALUES]);
+
+  // ここから変更: FACILITY_ID_TENNISを動的に取得
+  await executeScript(tab.id, (selectors) => {
+    const facilitySelect = document.querySelector(selectors.FACILITY_SELECT);
+    if (!facilitySelect) {
+      throw new Error('施設選択ドロップダウンが見つかりませんでした。');
+    }
+
+    let tennisFacilityValue = null;
+    for (const option of facilitySelect.options) {
+      // オプションのテキストに「テニス」が含まれるものを探す
+      if (option.textContent.includes('テニス')) {
+        tennisFacilityValue = option.value;
+        break;
+      }
+    }
+
+    if (tennisFacilityValue) {
+      facilitySelect.value = tennisFacilityValue;
+      changeIname(document.form1, gLotWTransLotInstSrchVacantAjaxAction);
+    } else {
+      throw new Error('「テニス」施設オプションが見つかりませんでした。');
+    }
+  }, [SELECTORS]);
+  // 変更ここまで
+
   logger('公園と施設の選択が完了しました。');
 
   await wait(WAIT_TIMES.AJAX_UPDATE);
