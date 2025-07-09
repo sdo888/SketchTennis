@@ -81,4 +81,31 @@ export async function performLotteryApplication(tab, applicationDetails, log) {
       window.confirm = originalConfirm;
     }
   });
+
+  // 5. Wait for the completion page and click "続けて申込み" button
+  log.push('「抽選申込完了」ページへの遷移を待ち、「続けて申込み」ボタンをクリックします。');
+  await wait(WAIT_TIMES.PAGE_LOAD); // ページが切り替わるのを待つ
+
+  // 新しいボタンのセレクタを定義
+  const continueApplyButtonSelector = '#btn-light[onclick*="gWOpeTransLotInstSrchVacantAction"]';
+
+  await executeScript(tab.id, (selector) => {
+    const continueButton = document.querySelector(selector);
+    if (continueButton) {
+      // onclick属性のJavaScriptコードを直接実行
+      const onclickAttr = continueButton.getAttribute('onclick');
+      if (onclickAttr) {
+        // javascript: を取り除いて実行可能な関数を生成
+        const scriptCode = onclickAttr.replace(/^javascript:/, '');
+        // doActionとdocument.form1, gWOpeTransLotInstSrchVacantActionがグローバルスコープにあることを期待
+        new Function(scriptCode)();
+      } else {
+        throw new Error('「続けて申込み」ボタンのonclick属性が見つかりませんでした。');
+      }
+    } else {
+      throw new Error('「続けて申込み」ボタンが見つかりませんでした。');
+    }
+  }, [continueApplyButtonSelector]);
+  log.push('「続けて申込み」ボタンをクリックしました。');
+  await wait(WAIT_TIMES.PAGE_LOAD); // クリック後のページロードを待つ
 }
