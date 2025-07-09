@@ -1,5 +1,6 @@
+// sdo888/sketchtennis/SketchTennis-b3708640fbba7f2b5de345be44e07fbe40c4abaf/automation-actions.js
 import { executeScript, wait } from './automation-helpers.js';
-import { clickCalendarCell, navigateToCalendarView } from './automation-navigation.js';
+import { clickCalendarCell, navigateToCalendarView } from './automation-navigation.js'; // Note: navigateToCalendarView is not used in this file
 import { WAIT_TIMES } from './constants.js';
 
 /**
@@ -9,22 +10,22 @@ import { WAIT_TIMES } from './constants.js';
  * @param {string} applicationDetails.date - The date to apply for (e.g., '0802').
  * @param {string} applicationDetails.timeSelector - The CSS selector for the time row.
  * @param {number} applicationDetails.applicationNumber - The application number (1, 2, etc.).
- * @param {string[]} log - The log array to push messages to.
+ * @param {boolean} applicationDetails.shouldClickContinueButton - Whether to click "続けて申込み" button after application.
+ * @param {function} logger - The logger function to push messages to.
  */
-export async function performLotteryApplication(tab, applicationDetails, log) {
-  const { date, timeSelector, applicationNumber } = applicationDetails;
+export async function performLotteryApplication(tab, applicationDetails, logger) {
+  const { date, timeSelector, applicationNumber, shouldClickContinueButton } = applicationDetails;
 
-  // 1. Click on the calendar cell
-  await clickCalendarCell(tab.id, date, timeSelector, log);
+  // 1. カレンダーセルをクリック
+  await clickCalendarCell(tab.id, date, timeSelector, logger);
   await wait(WAIT_TIMES.PAGE_LOAD);
 
-  // 2. Click the first "申込み" button
-  log.push(`${applicationNumber}件目の「申込み」ボタンをクリックします。`);
+  // 2. 最初の「申込み」ボタンをクリック
+  logger(`${applicationNumber}件目の「申込み」ボタンをクリックします。`);
   const clickResult = await executeScript(tab.id, () => {
     let alertMessage = null;
     const originalAlert = window.alert;
     window.alert = (message) => {
-      // Only treat alerts containing specific error text as blocking errors.
       if (message.includes('選択されていません')) {
         alertMessage = message;
       } else {
@@ -53,9 +54,9 @@ export async function performLotteryApplication(tab, applicationDetails, log) {
   }
   await wait(WAIT_TIMES.PAGE_LOAD);
 
-  // 3. Select the application number
-  log.push(`申込み番号のドロップダウンリストから「申込み${applicationNumber}件目」を選択します。`);
-  const applyValue = `${applicationNumber}-1`; // e.g., '1-1', '2-1'
+  // 3. 申込み番号を選択
+  logger(`申込み番号のドロップダウンリストから「申込み${applicationNumber}件目」を選択します。`);
+  const applyValue = `${applicationNumber}-1`;
   await executeScript(tab.id, (applyValue) => {
     const applyNoSelect = document.querySelector('#apply');
     if (applyNoSelect) {
@@ -66,8 +67,8 @@ export async function performLotteryApplication(tab, applicationDetails, log) {
   }, [applyValue]);
   await wait(500);
 
-  // 4. Click the final "申込み" button and confirm
-  log.push(`${applicationNumber}件目の最終確認の「申込み」ボタンをクリックし、ポップアップを承認します。`);
+  // 4. 最終確認の「申込み」ボタンをクリックし、確認
+  logger(`${applicationNumber}件目の最終確認の「申込み」ボタンをクリックし、ポップアップを承認します。`);
   await executeScript(tab.id, () => {
     const originalConfirm = window.confirm;
     window.confirm = () => true;
@@ -82,30 +83,31 @@ export async function performLotteryApplication(tab, applicationDetails, log) {
     }
   });
 
-  // 5. Wait for the completion page and click "続けて申込み" button
-  log.push('「抽選申込完了」ページへの遷移を待ち、「続けて申込み」ボタンをクリックします。');
-  await wait(WAIT_TIMES.PAGE_LOAD); // ページが切り替わるのを待つ
+  // 5. 完了ページへの遷移を待ち、必要に応じて「続けて申込み」ボタンをクリック
+  logger('「抽選申込完了」ページへの遷移を待ちます。');
+  await wait(WAIT_TIMES.PAGE_LOAD);
 
-  // 新しいボタンのセレクタを定義
-  const continueApplyButtonSelector = '#btn-light[onclick*="gWOpeTransLotInstSrchVacantAction"]';
+  if (shouldClickContinueButton) {
+    logger('「続けて申込み」ボタンをクリックします。');
+    const continueApplyButtonSelector = '#btn-light[onclick*="gWOpeTransLotInstSrchVacantAction"]';
 
-  await executeScript(tab.id, (selector) => {
-    const continueButton = document.querySelector(selector);
-    if (continueButton) {
-      // onclick属性のJavaScriptコードを直接実行
-      const onclickAttr = continueButton.getAttribute('onclick');
-      if (onclickAttr) {
-        // javascript: を取り除いて実行可能な関数を生成
-        const scriptCode = onclickAttr.replace(/^javascript:/, '');
-        // doActionとdocument.form1, gWOpeTransLotInstSrchVacantActionがグローバルスコープにあることを期待
-        new Function(scriptCode)();
+    await executeScript(tab.id, (selector) => {
+      const continueButton = document.querySelector(selector);
+      if (continueButton) {
+        const onclickAttr = continueButton.getAttribute('onclick');
+        if (onclickAttr) {
+          const scriptCode = onclickAttr.replace(/^javascript:/, '');
+          new Function(scriptCode)();
+        } else {
+          throw new Error('「続けて申込み」ボタンのonclick属性が見つかりませんでした。');
+        }
       } else {
-        throw new Error('「続けて申込み」ボタンのonclick属性が見つかりませんでした。');
+        throw new Error('「続けて申込み」ボタンが見つかりませんでした。');
       }
-    } else {
-      throw new Error('「続けて申込み」ボタンが見つかりませんでした。');
-    }
-  }, [continueApplyButtonSelector]);
-  log.push('「続けて申込み」ボタンをクリックしました。');
-  await wait(WAIT_TIMES.PAGE_LOAD); // クリック後のページロードを待つ
+    }, [continueApplyButtonSelector]);
+    logger('「続けて申込み」ボタンをクリックしました。');
+    await wait(WAIT_TIMES.PAGE_LOAD);
+  } else {
+    logger('「続けて申込み」ボタンはクリックしません。（このアカウントでの最後の申込みのため）');
+  }
 }
