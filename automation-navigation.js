@@ -1,4 +1,4 @@
-// sdo888/sketchtennis/SketchTennis-b3708640fbba7f2b5de345be44e07fbe40c4abaf/automation-navigation.js
+// sdo888/sketchtennis/SketchTennis-f49469c17466247324ca2a270d69c6c405e56fb8/automation-navigation.js
 import { URLS, SELECTORS, VALUES, WAIT_TIMES, TIME_SELECTOR_MAP } from './constants.js';
 import { parseAccountCsv } from './utils.js'; // Note: parseAccountCsv is not used in this file
 import { executeScript, wait, pollPage } from './automation-helpers.js';
@@ -84,7 +84,6 @@ export async function navigateToCalendarView(tab, parkId, logger) {
   }, [parkId, SELECTORS]);
   await wait(WAIT_TIMES.AJAX_UPDATE);
 
-  // ここから変更: FACILITY_ID_TENNISを動的に取得
   await executeScript(tab.id, (selectors) => {
     const facilitySelect = document.querySelector(selectors.FACILITY_SELECT);
     if (!facilitySelect) {
@@ -93,7 +92,6 @@ export async function navigateToCalendarView(tab, parkId, logger) {
 
     let tennisFacilityValue = null;
     for (const option of facilitySelect.options) {
-      // オプションのテキストに「テニス」が含まれるものを探す
       if (option.textContent.includes('テニス')) {
         tennisFacilityValue = option.value;
         break;
@@ -107,14 +105,15 @@ export async function navigateToCalendarView(tab, parkId, logger) {
       throw new Error('「テニス」施設オプションが見つかりませんでした。');
     }
   }, [SELECTORS]);
-  // 変更ここまで
-
   logger('公園と施設の選択が完了しました。');
 
-  await wait(WAIT_TIMES.AJAX_UPDATE);
-  const calendarVisible = await executeScript(tab.id, (selector) => !!document.querySelector(selector), [SELECTORS.LOTTERY_TABLE]);
-  if (!calendarVisible) throw new Error('カレンダーテーブルの表示に失敗しました。');
-  logger('カレンダーが表示されました。');
+  // 公園と施設の選択が完了した後、カレンダーテーブルの表示を確認する前に1秒待つ
+  await wait(1000); // 1秒待機
+
+  await wait(WAIT_TIMES.AJAX_UPDATE); // 既存の待機処理
+  const calendarVisible = await executeScript(tab.id, (selector) => !!document.querySelector(selector), [SELECTORS.LOTTERY_TABLE]); // 既存のカレンダーテーブル表示確認
+  if (!calendarVisible) throw new Error('カレンダーテーブルの表示に失敗しました。'); // 既存のエラーハンドリング
+  logger('カレンダーが表示されました。'); // 既存のログ出力
 }
 
 /**
