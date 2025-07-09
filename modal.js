@@ -1,4 +1,5 @@
-import { PARK_LIST } from './constants.js';
+import { PARK_LIST, PARK_LIST_HARD_COURT } from './constants.js'; // PARK_LIST_HARD_COURTをインポート
+import { ui } from './ui.js';
 
 const FORBIDDEN_PARK_ID = "1301110"; // 城北中央公園
 
@@ -6,8 +7,9 @@ const FORBIDDEN_PARK_ID = "1301110"; // 城北中央公園
  * Creates and appends the park selector dropdown to the modal.
  * @param {object} state - The application state object.
  * @param {object} ui - The UI elements object.
+ * @param {string} selectedCourtType - The currently selected court type ('artificial' or 'hard').
  */
-function createParkSelector(state, ui) {
+function createParkSelector(state, ui, selectedCourtType) {
   ui.modalParkSelectorContainer.innerHTML = ''; // Clear previous
 
   const label = document.createElement('label');
@@ -18,11 +20,19 @@ function createParkSelector(state, ui) {
   select.id = 'modal-park-select';
   select.className = 'custom-select'; // For styling
 
-  PARK_LIST.forEach(park => {
+  let parksToDisplay = [];
+  if (selectedCourtType === 'artificial') {
+    parksToDisplay = PARK_LIST; // 人工芝の場合、既存のPARK_LISTをそのまま使用
+  } else if (selectedCourtType === 'hard') {
+    parksToDisplay = PARK_LIST_HARD_COURT; // ハードコートの場合、新しいPARK_LIST_HARD_COURTを使用
+  } else {
+    // デフォルトまたはフォールバック (例えば、人工芝のリスト)
+    parksToDisplay = PARK_LIST;
+  }
+
+  parksToDisplay.forEach(park => {
     const option = new Option(park.name, park.value);
-    if (park.value === state.currentParkId) {
-      option.selected = true;
-    }
+    // デフォルト選択のロジックは必要に応じてここに追加
     select.appendChild(option);
   });
 
@@ -30,6 +40,7 @@ function createParkSelector(state, ui) {
   ui.modalParkSelectorContainer.appendChild(select);
 
   // --- Add event listener to prevent selection of a specific park ---
+  // (FORBIDDEN_PARK_ID が現在のリストに含まれるかどうかに依存)
   let previousValidParkId = select.value;
 
   select.addEventListener('focus', () => {
@@ -58,8 +69,9 @@ export function openTimeSlotModal(event, state, ui) {
   const [year, month, day] = state.currentEditingDate.split('-');
   ui.modalDateHeader.textContent = `${year}年${month}月${day}日`;
 
-  // Create and add the park selector
-  createParkSelector(state, ui);
+  // コート種類の初期値を取得し、それに基づいて公園セレクターを作成
+  const initialCourtType = ui.courtTypeSelect.value;
+  createParkSelector(state, ui, initialCourtType);
 
   // Generate time slot list
   ui.timeSlotList.innerHTML = '';
@@ -70,8 +82,7 @@ export function openTimeSlotModal(event, state, ui) {
   const header = document.createElement('div');
   header.className = 'time-slot-item time-slot-header'; // Align with items
   header.innerHTML = `
-    <div></div> <!-- Placeholder for checkbox and label -->
-    <div class="time-slot-right-container">
+    <div></div> <div class="time-slot-right-container">
       <span class="header-label">申込口数</span>
     </div>
   `;
@@ -170,10 +181,16 @@ function confirmTimeSelection(state, ui, renderCalendar, updateAccountSummary) {
 /**
  * Initializes the event listeners for the modal buttons.
  * @param {object} state - The application state object.
-  * @param {object} ui - The UI elements object.
+ * @param {object} ui - The UI elements object.
  * @param {function} renderCalendar - The function to re-render the calendar.
  */
 export function initializeModal(state, ui, renderCalendar, updateAccountSummary) {
   ui.confirmTimeBtn.addEventListener('click', () => confirmTimeSelection(state, ui, renderCalendar, updateAccountSummary));
   ui.cancelTimeBtn.addEventListener('click', () => closeTimeSlotModal(state, ui));
+
+  // コート種類ドロップダウンの変更イベントをリッスン
+  ui.courtTypeSelect.addEventListener('change', () => {
+    const selectedCourtType = ui.courtTypeSelect.value;
+    createParkSelector(state, ui, selectedCourtType); // 選択された種類に基づいて公園リストを更新
+  });
 }

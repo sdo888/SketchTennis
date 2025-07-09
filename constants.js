@@ -1,4 +1,3 @@
-// sdo888/sketchtennis/SketchTennis-b3708640fbba7f2b5de345be44e07fbe40c4abaf/constants.js
 export const URLS = {
   TOP_PAGE: 'https://kouen.sports.metro.tokyo.lg.jp/web/index.jsp',
   LOGIN_PAGE_PART: '/web/rsvWTransUserLoginAction.do',
@@ -52,6 +51,7 @@ export const TIME_SELECTOR_MAP = {
 };
 
 export const PARK_LIST = [
+  { value: "0", name: "選択してください。" }, // 追加
   { value: "1301000", name: "日比谷公園" },
   { value: "1301010", name: "芝公園" },
   { value: "1301040", name: "猿江恩賜公園" },
@@ -79,6 +79,14 @@ export const PARK_LIST = [
   { value: "1301280", name: "東大和南公園" },
   { value: "1301315", name: "大井ふ頭中央海浜公園Ｂ" },
   { value: "1301360", name: "有明テニスＣ人工芝コート" },
+];
+
+export const PARK_LIST_HARD_COURT = [
+  { value: "0", name: "選択してください。" },
+  { value: "1310", name: "大井ふ頭海浜公園Ａ" },
+  { value: "1315", name: "大井ふ頭海浜公園Ｂ" },
+  { value: "1350", name: "有明テニスＡ屋外ハードコート" },
+  { value: "1370", name: "有明テニスＢインドアコート" },
 ];
 
 export const DEBUG_MODE = true; // 開発時にタブを閉じないようにする (リリース時は false に設定)

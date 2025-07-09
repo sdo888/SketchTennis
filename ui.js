@@ -44,6 +44,7 @@ export const ui = {
   timeSlotList: document.getElementById('time-slot-list'),
   confirmTimeBtn: document.getElementById('confirm-time-btn'),
   cancelTimeBtn: document.getElementById('cancel-time-btn'),
+  courtTypeSelect: document.getElementById('court-type-select'), // 追加
 };
 
 export function showView(viewName) {
