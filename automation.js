@@ -21,12 +21,22 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
     const individualApplications = [];
     const REPEAT_COUNT_PER_SLOT = 2;
 
-    let overallAccountCounter = 0;
+    // let overallAccountCounter = 0; // ★削除: この変数はもう使用しません
+
+    const { accountCsvContent } = await chrome.storage.local.get('accountCsvContent');
+    if (!accountCsvContent) throw new Error('アカウントCSVがアップロードされていません。');
+    const allAccounts = parseAccountCsv(accountCsvContent);
+
+    if (allAccounts.length === 0) { // アカウントが全くない場合のチェック
+      throw new Error('アカウントCSVに有効なアカウントが登録されていません。');
+    }
+
+    let currentAccountIndexInCycle = 0; // ★追加: 割り当てるアカウントの現在のインデックス
 
     for (const dailySelection of selections) {
       for (const [timeSlot, count] of Object.entries(dailySelection.timeSlots)) {
         for (let uiSlotIdx = 0; uiSlotIdx < count; uiSlotIdx++) {
-          const assignedAccountIndex = overallAccountCounter;
+          const assignedAccountIndex = currentAccountIndexInCycle; // ★変更: overallAccountCounterの代わりに現在の循環インデックスを使用
 
           for (let applicationNumber = 1; applicationNumber <= REPEAT_COUNT_PER_SLOT; applicationNumber++) {
             individualApplications.push({
@@ -39,7 +49,7 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
               applicationNumberInSlot: applicationNumber,
             });
           }
-          overallAccountCounter++;
+          currentAccountIndexInCycle = (currentAccountIndexInCycle + 1) % allAccounts.length; // ★変更: アカウントインデックスを循環させる
         }
       }
     }
@@ -49,19 +59,16 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
     }
     logger(`合計 ${individualApplications.length} 件の申込を作成します。（各UI選択スロットにつき ${REPEAT_COUNT_PER_SLOT} 回申込み）`);
 
-    const { accountCsvContent } = await chrome.storage.local.get('accountCsvContent');
-    if (!accountCsvContent) throw new Error('アカウントCSVがアップロードされていません。');
-    const allAccounts = parseAccountCsv(accountCsvContent);
-
-    if (allAccounts.length < overallAccountCounter) {
-      throw new Error(`アカウント数が不足しています。必要: ${overallAccountCounter}, 登録済: ${allAccounts.length}`);
-    }
+    // if (allAccounts.length < overallAccountCounter) { // ★削除: このチェックはもう必要ありません
+    //   throw new Error(`アカウント数が不足しています。必要: ${overallAccountCounter}, 登録済: ${allAccounts.length}`);
+    // }
 
     let successfulApplications = 0;
 
     // 開いているタブを追跡するためのマップ (エラー発生時のクリーンアップ用)
     const openTabs = new Map();
 
+    // 割り当てられたアカウントごとにアプリケーションをグループ化
     const applicationsByAccount = new Map();
     for (const app of individualApplications) {
       if (!applicationsByAccount.has(app.assignedAccountIndex)) {
@@ -70,8 +77,13 @@ export async function executeConfirmLottery(selections, sendResponse, logger) {
       applicationsByAccount.get(app.assignedAccountIndex).push(app);
     }
 
-    for (const [accountIndex, appsForThisAccount] of applicationsByAccount.entries()) {
-      const account = allAccounts[accountIndex];
+    // accountsByApplicationIndex のキー（assignedAccountIndex）をソートして処理順を決定
+    const sortedAccountIndices = Array.from(applicationsByAccount.keys()).sort((a, b) => a - b);
+
+
+    for (const accountIndex of sortedAccountIndices) { // ★変更: ソートされたキーでループ
+      const appsForThisAccount = applicationsByAccount.get(accountIndex);
+      const account = allAccounts[accountIndex]; // 実際のallAccountsからアカウント情報を取得
       let currentTab = null;
 
       try {

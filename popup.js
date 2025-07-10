@@ -137,8 +137,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (usedAccounts > state.totalAccounts) {
-      alert(`申込アカウント数が登録アカウント数を超えています。(申込: ${usedAccounts} / 登録: ${state.totalAccounts})\n処理を中断します。`);
+    // ★変更: 保持しているアカウント数の2倍まで許可するように変更
+    if (usedAccounts > state.totalAccounts * 2) {
+      alert(`申込アカウント数が登録アカウント数 (${state.totalAccounts}件) の2倍を超えています。(申込: ${usedAccounts} / 登録最大: ${state.totalAccounts * 2})\n処理を中断します。`);
       return;
     }
 
