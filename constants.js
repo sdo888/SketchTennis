@@ -90,4 +90,4 @@ export const PARK_LIST_HARD_COURT = [
   { value: "1201370", name: "有明テニスＢインドアコート" },
 ];
 
-export const DEBUG_MODE = true;
+export const DEBUG_MODE = false;

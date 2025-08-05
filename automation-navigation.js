@@ -119,7 +119,7 @@ export async function navigateToCalendarView(tab, parkId, courtType, logger) {
   }, [SELECTORS]);
   logger('公園と施設の選択が完了しました。');
 
-  await wait(1000);
+  await wait(3000);
 
   await wait(WAIT_TIMES.AJAX_UPDATE);
   const calendarVisible = await executeScript(tab.id, (selector) => !!document.querySelector(selector), [SELECTORS.LOTTERY_TABLE]);
