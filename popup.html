@@ -15,17 +15,6 @@
           <button id="apply-lottery-btn" class="btn btn-primary">抽選申し込み</button>
           <button id="check-result-btn" class="btn btn-secondary">抽選結果確認</button>
         </div>
-        <div class="test-mode-container">
-          <div class="test-mode-header">
-            <label for="test-mode-checkbox">テストモード</label>
-            <input type="checkbox" id="test-mode-checkbox">
-          </div>
-          <div id="test-date-controls" class="hidden">
-            <label for="test-day-input">日付を指定 (1-31):</label>
-            <input type="number" id="test-day-input" min="1" max="31">
-          </div>
-        </div>
-        <p id="status" class="status-message"></p>
         <div class="account-upload-container">
           <div id="csv-upload-view">
             <label for="account-csv-upload" id="csv-upload-label">アカウントCSVをアップロード:</label>
@@ -43,6 +32,18 @@
           </div>
           <pre id="csv-preview" class="hidden"></pre>
         </div>
+        <div class="test-mode-container">
+          <div class="test-mode-header">
+            <label for="test-mode-checkbox">テストモード</label>
+            <input type="checkbox" id="test-mode-checkbox">
+          </div>
+          <div id="test-date-controls" class="hidden">
+            <label for="test-day-input">日付を指定 (1-31):</label>
+            <input type="number" id="test-day-input" min="1" max="31">
+          </div>
+        </div>
+        <p id="status" class="status-message"></p>
+      
       </div>
 
       <div id="calendar-view" class="hidden">
@@ -84,7 +85,6 @@
         </div>
         <div class="button-group vertical">
           <button id="confirm-lottery-application-btn" class="btn btn-primary">抽選申込を確定</button>
-          <button id="test-lottery-application-btn" class="btn btn-secondary btn-dev">抽選申込テスト (開発用)</button>
           <button id="confirm-selection-btn" class="btn btn-secondary hidden">申し込み日を確定</button>
           <button id="back-to-main-btn" class="btn btn-secondary">戻る</button>
         </div>
